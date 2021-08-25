@@ -25,6 +25,7 @@ class Indicator():
         self.type = "mic"
         self.toggleStatus = getStatus()
         self.indicator = AppIndicator3.Indicator.new(APPINDICATOR_ID + "-" + self.type, getIcon(self.type, self.toggleStatus), AppIndicator3.IndicatorCategory.SYSTEM_SERVICES)
+        #self.indicator.connect("scroll-event", self.access)     def access(self, *args):
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.indicator.set_menu(self.build_menu())
         notify.init(APPINDICATOR_ID)
@@ -35,6 +36,7 @@ class Indicator():
             frameStart = str(int(frameStart)+1)
             self.indicator.set_icon(icon)
             GObject.timeout_add(30, self.animate, type, frameStart, frameEnd)
+            #self.indicator.set_label(frameStart + "%", "0")
 
     def checkStatus(self):
         toggle = subprocess.check_output("amixer get Capture", shell=True)
@@ -47,8 +49,16 @@ class Indicator():
             self.toggleStatus = toggle
         GObject.timeout_add(100, self.checkStatus)
 
+    def toggleMic(self, *args):
+        subprocess.check_output("amixer -D pulse set Capture toggle", shell=True)
+
     def build_menu(self):
         menu = Gtk.Menu()
+
+        toggle = Gtk.MenuItem("Toggle microphone")
+        toggle.connect('activate', self.toggleMic)
+
+        menu.append(toggle)
         menu.show_all()
         self.checkStatus()
         return menu
@@ -80,7 +90,6 @@ class Indicator2():
         except:
             pass
 
-        print(check)
         if check == "":
             toggle = "off"
         else:
